@@ -39,15 +39,13 @@ jobs:
 
       - name: Add version
         run: |
-          mv build/libs/cicd-study-0.0.1-SNAPSHOT.jar build/libs/cicd-study-${{ steps.set-version.outputs.VERSION }}.jar
+          mv build/libs/cicd-study-0.0.1-SNAPSHOT.jar build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: cicd-study-application # cicd-study-application.zip
-          path: build/libs/cicd-study-${{ steps.set-version.outputs.VERSION }}.jar
-
-
+          path: build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
 
   deploy:
     runs-on: ubuntu-latest
@@ -58,7 +56,7 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: cicd-study-application # cicd-study-application.zip
+          name: cicd-study-application
           path: build/libs/
 
       - name: Deploy to EC2
@@ -68,4 +66,3 @@ jobs:
           scp -i private_key.pem -o StrictHostKeyChecking=no build/libs/cicd-study-${{ needs.build.outputs.release }}.jar ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER_NAME }}/cicd-study-${{ needs.build.outputs.release }}.jar
           ssh -i private_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }} "pgrep java | xargs kill -9; nohup java -jar /home/${{ secrets.EC2_USER_NAME }}/cicd-study-${{ needs.build.outputs.release }}.jar > app.log 2>&1 &"
           rm -f private_key.pem
-
