@@ -3,7 +3,7 @@ services:
     image: alstjr971/cicd-study:latest
     ports:
       - 8080:8080
-    entrypoint:
+    environment:
       SPRING_PROFILES_ACTIVE: dev
   jenkins:
     image: jenkins/jenkins:2.471-jdk21
