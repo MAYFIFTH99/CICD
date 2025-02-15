@@ -50,7 +50,7 @@ jobs:
         run: docker pull ${{ secrets.DOCKERHUB_USER_NAME }}/cicd-study
 
       - name: docker app service container stop
-        run: docker-compose down
+        run: docker-compose down app
 
       - name: docker app service container start
         run: docker-compose up -d app
