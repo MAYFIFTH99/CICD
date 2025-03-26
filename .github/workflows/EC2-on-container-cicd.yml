@@ -39,7 +39,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Docker Image Push To Hub
-        run: docker push ${{ secrets.DOCKERHUB_USER_NAME}}/cicd-study
+        run: docker push ${{ secrets.DOCKERHUB_USER_NAME }}/cicd-study
 
   deploy-run-docker-image-on-ec2:
     runs-on: self-hosted
@@ -47,17 +47,22 @@ jobs:
       - build
 
     steps:
-      - name: Docker Pull
-        run: docker pull ${{ secrets.DOCKERHUB_USER_NAME }}/cicd-study:latest
+      - name: Copy docker-compose.yml to EC2
+        run: |
+          scp -i ${{ secrets.EC2_SSH_PRIVATE_KEY }} docker-compose.yml ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/docker-compose.yml
+
+      - name: Docker Pull on EC2
+        run: |
+          ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "docker pull ${{ secrets.DOCKERHUB_USER_NAME }}/cicd-study:latest"
 
       - name: Docker-Compose App Service Down
-        run: docker-compose down app
+        run: |
+          ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "cd /home/${{ secrets.EC2_USER }} && docker-compose down app"
 
       - name: Docker-Compose App Service Run
-        run: docker-compose up -d app
+        run: |
+          ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "cd /home/${{ secrets.EC2_USER }} && docker-compose up -d app"
 
       - name: Docker System Prune
-        run: docker system prune -f
-
-
-
+        run: |
+          ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }} ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "docker system prune -f"
