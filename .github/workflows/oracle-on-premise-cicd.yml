@@ -1,0 +1,15 @@
+name: oracle-on-premise-cicd
+on:
+  workflow-dispatch:
+    inputs:
+      tags:
+        description: '태그를 설정해주세요'
+        required: true
+        default: main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ }}
+    steps:
+      id: set-version

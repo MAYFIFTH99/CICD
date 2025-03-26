@@ -11,7 +11,7 @@ networks:
 services:
   app-blue:
     hostname: app-blue
-    image: jhy7342/cicd-study:latest
+    image: alstjr971/cicd-study:latest
     ports:
       - 8080
     volumes:
@@ -24,9 +24,9 @@ services:
 
   app-green:
     hostname: app-green
-    image: jhy7342/cicd-study:latest
+    image: alstjr971/cicd-study:latest
     ports:
-      - 8080
+      - 8082:8080
     volumes:
       - ./src/main/resources/application-green.yml:/application.yml
     environment:
