@@ -48,8 +48,3 @@ jobs:
           name: cicd-study-application
           path: build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
 
-
-    deploy:
-      runs-on: ubuntu-latest
-      steps:
-        - name:
