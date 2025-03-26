@@ -49,7 +49,10 @@ jobs:
     steps:
       - name: Copy docker-compose.yml to EC2
         run: |
-          scp -i ${{ secrets.EC2_SSH_KEY }} docker-compose.yml ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER_NAME }}/docker-compose.yml
+          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem docker-compose.yml ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER_NAME }}/docker-compose.yml
+          rm -f private_key.pem
 
       - name: Docker Pull on EC2
         run: |
