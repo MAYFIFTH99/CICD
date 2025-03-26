@@ -1,0 +1,63 @@
+name: tag-dotted-oracle-on-premise-cicd
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: '태그를 설정해주세요'
+        required: true
+        default: main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ github.event.inputs.tags }}  # 태그 그대로 사용
+    steps:
+      - name: Echo Version Name
+        run: |
+          echo "버전 확인 -> ${{ github.event.inputs.tags }}"  # 태그 그대로 사용
+
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          ref: '${{ github.event.inputs.tags }}'
+
+      - name: Grant Execute Permission To Gradlew
+        run: chmod +x ./gradlew
+
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: build with gradlew
+        run: |
+          ./gradlew clean test bootJar
+
+      - name: Add Version
+        run: |
+          mv build/libs/cicd-study-0.0.1-SNAPSHOT.jar build/libs/cicd-study-${{ github.event.inputs.tags }}.jar  # 태그 그대로 사용
+
+      - name: Upload Artifact To Runner Server
+        uses: actions/upload-artifact@v4
+        with:
+          name: cicd-study-application
+          path: build/libs/cicd-study-${{ github.event.inputs.tags }}.jar  # 태그 그대로 사용
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cicd-study-application
+          path: build/libs/
+
+      - name: Deploy To Oracle OCI
+        run: |
+          echo "${{ secrets.ORACLE_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -o StrictHostKeyChecking=no build/libs/cicd-study-${{ needs.build.outputs.release }}.jar ${{ secrets.ORACLE_USER_NAME }}@${{ secrets.ORACLE_HOST }}:/home/${{ secrets.ORACLE_USER_NAME }}/cicd-study-${{ needs.build.outputs.release }}.jar
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ${{ secrets.ORACLE_USER_NAME }}@${{ secrets.ORACLE_HOST }} "pgrep java | xargs kill -9; nohup java -jar /home/${{ secrets.ORACLE_USER_NAME }}/cicd-study-${{ needs.build.outputs.release }}.jar > app.log 2>&1 &"
+          rm -f private_key.pem
