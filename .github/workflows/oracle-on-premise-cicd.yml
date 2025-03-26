@@ -10,6 +10,41 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      release: ${{ }}
+      release: ${{ steps.set-version.outputs.VERSION_NAME }}
     steps:
-      id: set-version
+      - id: set-version
+        run: |
+         echo "VERSION_NAME=$(echo "${{ github.event.inputs.tags }}" | sed "s/\./\-/g")" >> $GITHUB_OUTPUT
+
+      - name: Echo Version Name
+        run: |
+          echo "버전 확인 -> ${{ steps.set-version.outputs.VERSION_NAME }}"
+
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          ref: '${{ github.event.inputs.tags }}'
+
+      - name: Grant Execute Permission To Gradlew
+        run: chmod +x ./gradlew
+
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: build with gradlew
+        run: |
+          ./gradlew clean test bootJar
+
+      - name: Add Version
+        run: |
+          mv build/libs/cicd-study-0.0.1-SNAPSHOT-plain.jar build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+
+      - name: Upload Artifact To Runner Server
+        uses: actions/upload-artifact@v4
+        with:
+          name: cicd-study-application
+          path: build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+
