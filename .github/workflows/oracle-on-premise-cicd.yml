@@ -1,6 +1,6 @@
 name: oracle-on-premise-cicd
 on:
-  workflow-dispatch:
+  workflow_dispatch:
     inputs:
       tags:
         description: '태그를 설정해주세요'
