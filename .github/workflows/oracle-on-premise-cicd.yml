@@ -56,7 +56,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cicd-study-application
-          ref: build/libs/
+          path: build/libs/
 
       - name: Deploy To Oracle OCI
         run: |
