@@ -40,7 +40,7 @@ jobs:
 
       - name: Add Version
         run: |
-          mv build/libs/cicd-study-0.0.1-SNAPSHOT-plain.jar build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+          mv build/libs/cicd-study-0.0.1-SNAPSHOT.jar build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
 
       - name: Upload Artifact To Runner Server
         uses: actions/upload-artifact@v4
@@ -48,3 +48,8 @@ jobs:
           name: cicd-study-application
           path: build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
 
+
+    deploy:
+      runs-on: ubuntu-latest
+      steps:
+        - name:
