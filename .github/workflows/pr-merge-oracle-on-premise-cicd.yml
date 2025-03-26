@@ -1,4 +1,4 @@
-name: oracle-on-premise-cicd
+name: pr-merge-oracle-on-premise-cicd
 
 on:
   push:
