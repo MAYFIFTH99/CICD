@@ -1,0 +1,66 @@
+name: oracle-on-premise-cicd
+
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 push가 발생할 때만 실행됨
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.set-version.outputs.VERSION_NAME }}
+    steps:
+      - id: set-version
+        run: |
+          echo "VERSION_NAME=$(echo "${{ github.sha }}" | cut -c1-7)" >> $GITHUB_OUTPUT  # 커밋의 첫 7자리로 버전 설정
+
+      - name: Echo Version Name
+        run: |
+          echo "버전 확인 -> ${{ steps.set-version.outputs.VERSION_NAME }}"
+
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        with:
+          ref: 'main'  # main 브랜치에서 코드를 체크아웃
+
+      - name: Grant Execute Permission To Gradlew
+        run: chmod +x ./gradlew
+
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Build with Gradle
+        run: |
+          ./gradlew clean test bootJar
+
+      - name: Add Version
+        run: |
+          mv build/libs/cicd-study-0.0.1-SNAPSHOT.jar build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+
+      - name: Upload Artifact To Runner Server
+        uses: actions/upload-artifact@v4
+        with:
+          name: cicd-study-application
+          path: build/libs/cicd-study-${{ steps.set-version.outputs.VERSION_NAME }}.jar
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cicd-study-application
+          path: build/libs/
+
+      - name: Deploy To Oracle OCI
+        run: |
+          echo "${{ secrets.ORACLE_SSH_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          scp -i private_key.pem -o StrictHostKeyChecking=no build/libs/cicd-study-${{ needs.build.outputs.release }}.jar ${{ secrets.ORACLE_USER_NAME }}@${{ secrets.ORACLE_HOST }}:/home/${{ secrets.ORACLE_USER_NAME }}/cicd-study-${{ needs.build.outputs.release }}.jar
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ${{ secrets.ORACLE_USER_NAME }}@${{ secrets.ORACLE_HOST }} "pgrep java | xargs kill -9; nohup java -jar /home/${{ secrets.ORACLE_USER_NAME }}/cicd-study-${{ needs.build.outputs.release }}.jar > app.log 2>&1 &"
+          rm -f private_key.pem
