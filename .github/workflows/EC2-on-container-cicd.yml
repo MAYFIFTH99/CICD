@@ -47,30 +47,15 @@ jobs:
       - build
 
     steps:
-      - name: Create SSH Key File
-        run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
+      - name: docker pull
+        run: docker pull ${{ secrets.DOCKERHUB_USER_NAME }}/cicd-study
 
-      - name: Copy docker-compose.yml to EC2
-        run: |
-          scp -i private_key.pem docker-compose.yml ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER_NAME }}/actions-runner/docker-compose.yml
+      - name: docker app service container stop
+        run: docker-compose down
 
-      - name: Docker Pull on EC2
-        run: |
-          ssh -i private_key.pem ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }} "docker pull ${{ secrets.DOCKERHUB_USER_NAME }}/cicd-study:latest"
+      - name: docker app service container start
+        run: docker-compose up -d app
 
-      - name: Docker-Compose App Service Down
-        run: |
-          ssh -i private_key.pem ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }} "cd /home/${{ secrets.EC2_USER_NAME }} && docker-compose down"
 
-      - name: Docker-Compose App Service Run
-        run: |
-          ssh -i private_key.pem ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }} "cd /home/${{ secrets.EC2_USER_NAME }} && docker-compose up -d app"
-
-      - name: Docker System Prune
-        run: |
-          ssh -i private_key.pem ${{ secrets.EC2_USER_NAME }}@${{ secrets.EC2_HOST }} "docker system prune -f"
-
-      - name: Clean Up SSH Key File
-        run: rm -f private_key.pem
+      - name: delete old docker image
+        run: docker system prune -f
