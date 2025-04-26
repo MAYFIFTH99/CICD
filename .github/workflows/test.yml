@@ -1,0 +1,37 @@
+name: PR CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Github Hosted Runner
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+          cache: gradle # gradle 의존성 캐싱으로 빌드 시간 최적화
+
+      - name: Grant Execute Permission To Gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: |
+          ./gradlew clean test bootJar
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: build/test-results/test/
+
+      - name: Run Code Style Check
+        run: ./gradlew check
