@@ -35,3 +35,11 @@ jobs:
 
       - name: Run Code Style Check
         run: ./gradlew check
+
+      - name: Report Test Resgults
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: JUnit Tests
+          path: build/test-results/test/*.xml
+          reporter: java-junit
